@@ -1,0 +1,33 @@
+/* ====== Projects Section ====== */
+.projects-section {
+  padding: clamp(4rem, 8vw, 8rem) var(--gutter);
+}
+
+.projects-header {
+  max-width: var(--max-w);
+  margin: 0 auto clamp(3rem, 6vw, 6rem);
+}
+
+.projects-label {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--ink-30);
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.projects-heading {
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+.projects-list {
+  max-width: var(--max-w);
+  margin: 0 auto;
+}

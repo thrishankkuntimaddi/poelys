@@ -1,0 +1,44 @@
+/* ====== Philosophy Section ====== */
+.philosophy {
+  padding: clamp(5rem, 10vw, 9rem) var(--gutter);
+  background-color: var(--ink);
+  color: var(--bg);
+}
+
+.philosophy-inner {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.philosophy-heading {
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--bg);
+  margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.philosophy-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.philosophy-body p {
+  font-size: clamp(1rem, 1.8vw, 1.15rem);
+  line-height: 1.75;
+  color: rgba(250, 249, 247, 0.65);
+  font-weight: 300;
+}
+
+.philosophy-closer {
+  color: rgba(250, 249, 247, 0.85) !important;
+  font-style: italic;
+  font-family: var(--font-serif);
+  font-size: clamp(1.1rem, 2vw, 1.3rem) !important;
+  margin-top: 1rem;
+}
+
+

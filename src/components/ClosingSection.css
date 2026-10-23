@@ -1,0 +1,57 @@
+/* ====== Closing Section ====== */
+.closing {
+  padding: clamp(5rem, 10vw, 9rem) var(--gutter);
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.closing-inner {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.closing-heading {
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--ink);
+  margin-bottom: 1.5rem;
+}
+
+.closing-sub {
+  font-size: clamp(1rem, 1.8vw, 1.15rem);
+  color: var(--ink-60);
+  line-height: 1.7;
+  font-weight: 300;
+  margin-bottom: 3rem;
+}
+
+.closing-links {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.closing-anchor {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--red);
+  border-bottom: 1px solid var(--red);
+  padding-bottom: 2px;
+  transition-property: color, opacity;
+  transition-duration: 200ms;
+  transition-timing-function: ease;
+}
+
+.closing-anchor:hover {
+  opacity: 0.75;
+}
+
+@media (max-width: 600px) {
+  .closing-br {
+    display: none;
+  }
+}
