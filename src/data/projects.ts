@@ -60,15 +60,27 @@ export const projects: Project[] = [
     icon: "◎",
   },
   {
-    id: "sdatos",
+    id: "yormenu",
     number: "05",
-    name: "SDATOS",
+    name: "YorMenu",
+    category: "Restaurants · Operations",
+    tagline: "From table to kitchen to bill.",
+    description:
+      "A restaurant platform that runs the whole dinner: table floor, waiter app, kitchen order tickets, billing counter, and a QR menu where guests can browse, order, or call a server. Many restaurants run on one server, and none of them can see another's data.",
+    url: "https://github.com/thrishankkuntimaddi/YorMenu",
+    cta: "Explore YorMenu",
+    icon: "🛎",
+  },
+  {
+    id: "sentinelflight",
+    number: "06",
+    name: "SentinelFlight",
     category: "Space · Research · Engineering",
     tagline: "Navigate around the hazards.",
     description:
-      "An engineering experiment exploring how spacecraft trajectories can be planned around orbital debris. SDATOS combines a mission console, catalog screening, and a reinforcement-learning agent — the Double DQN — to simulate, evaluate, and propose trajectory adjustments. A research tool, not a production system.",
+      "An engineering experiment exploring how spacecraft trajectories can be planned around orbital debris. SentinelFlight combines a mission console, catalog screening, and a reinforcement-learning agent — the Double DQN — to simulate, evaluate, and propose trajectory adjustments. A research tool, not a production system.",
     url: "https://enhanced-space-debris-avoidance-and.onrender.com/",
-    cta: "Explore SDATOS",
+    cta: "Explore SentinelFlight",
     icon: "◌",
   },
 ];

@@ -21,9 +21,13 @@ const projectImages: Record<string, { src: string; alt: string }> = {
     src: '/images/learnvianotes-icon.png',
     alt: 'LearnViaNotes — a notebook surrounded by computer science subject icons',
   },
-  sdatos: {
-    src: '/images/sdatos-icon.jpg',
-    alt: 'SDATOS — Earth surrounded by orbiting satellites and space debris tracking trajectories',
+  yormenu: {
+    src: '/images/yormenu-icon.png',
+    alt: 'YorMenu — a white serving cloche on a red rounded-square app icon',
+  },
+  sentinelflight: {
+    src: '/images/sentinelflight-icon.jpg',
+    alt: 'SentinelFlight — Earth surrounded by orbiting satellites and space debris tracking trajectories',
   },
 };
 
