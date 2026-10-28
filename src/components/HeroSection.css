@@ -114,9 +114,22 @@
   }
 }
 
-/* Thin strike through "n't" so it reads "We do know" */
+/* Strike through "n't" so it reads "We do know" */
 .hero-strike {
-  text-decoration-line: line-through;
-  text-decoration-thickness: 0.035em;
-  text-decoration-color: var(--red);
+  text-decoration: none;
+  position: relative;
+  display: inline-block;
+}
+
+.hero-strike::after {
+  content: '';
+  position: absolute;
+  left: -0.04em;
+  right: -0.04em;
+  top: 58%;
+  height: 0.07em;
+  background: var(--red);
+  border-radius: 0.04em;
+  transform: translateY(-50%);
+  pointer-events: none;
 }
