@@ -113,3 +113,10 @@
     display: none;
   }
 }
+
+/* Thin strike through "n't" so it reads "We do know" */
+.hero-strike {
+  text-decoration-line: line-through;
+  text-decoration-thickness: 0.035em;
+  text-decoration-color: var(--red);
+}

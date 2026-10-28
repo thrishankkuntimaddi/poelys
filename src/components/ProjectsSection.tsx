@@ -14,11 +14,11 @@ const projectImages: Record<string, { src: string; alt: string }> = {
     alt: 'Oruinwan — a gold and black geometric emblem representing connected collaboration',
   },
   'expense-tracker': {
-    src: '/images/expense-tracker-icon.png',
+    src: '/images/expense-tracker-icon.png?v=2',
     alt: 'Expense Tracker — a green wallet app icon with a rupee coin and receipt',
   },
   learnvianotes: {
-    src: '/images/learnvianotes-icon.png',
+    src: '/images/learnvianotes-icon.png?v=2',
     alt: 'LearnViaNotes — a notebook surrounded by computer science subject icons',
   },
   yormenu: {

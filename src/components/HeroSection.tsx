@@ -35,7 +35,7 @@ export function HeroSection() {
 
         {/* Headline */}
         <h1 className="hero-headline hero-animate" id="hero-headline">
-          <span className="hero-line">We don't know</span>
+          <span className="hero-line">We do<s className="hero-strike">n't</s> know</span>
           <span className="hero-line">what we're building.</span>
           <span className="hero-line hero-line--accent">And we're contributing.</span>
         </h1>
