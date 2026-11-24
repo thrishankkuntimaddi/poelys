@@ -1,0 +1,100 @@
+rules_version = '2';
+// Poelys: public reads of the published site config, create-only visitor
+// records and messages (rate limited per visitor), and everything else for the
+// owner's verified Google account only.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Who is the owner ----------
+    function isOwner() {
+      return request.auth != null
+        && request.auth.token.email == 'poelysproducts@gmail.com'
+        && request.auth.token.email_verified == true
+        && request.auth.token.firebase.sign_in_provider == 'google.com'
+        && notRevoked();
+    }
+    // "Sign out everywhere": sign-ins older than private/security.revokedBefore are refused.
+    function notRevoked() {
+      let sec = /databases/$(database)/documents/private/security;
+      return !exists(sec) || request.auth.token.auth_time > get(sec).data.revokedBefore.toMillis() / 1000;
+    }
+    // Changes also need a sign-in from the last 30 days.
+    function isFreshOwner() {
+      return isOwner() && request.time < timestamp.value(request.auth.token.auth_time * 1000) + duration.value(30, 'd');
+    }
+    function str(v, min, max) { return v is string && v.size() >= min && v.size() <= max; }
+    function vidOk(v) { return v is string && v.matches('^[a-z0-9]{16}$'); }
+
+    // ---------- Published site config: anyone reads, owner writes ----------
+    match /site/{doc} {
+      allow read: if true;
+      allow write: if isFreshOwner() && doc == 'config'
+        && request.resource.data.keys().hasOnly(['data', 'updatedAt', 'by'])
+        && str(request.resource.data.data, 2, 400000)
+        && request.resource.data.updatedAt == request.time;
+    }
+    match /versions/{id} {
+      allow read: if isOwner();
+      allow create: if isFreshOwner() && str(request.resource.data.data, 2, 400000);
+      allow delete: if isFreshOwner();
+    }
+
+    // ---------- Rate limits ----------
+    // A visitor's commit must also stamp rate/{vid} (or msgrate/{vid}) with the
+    // request time; the stamp can only move forward after the cool-down.
+    match /rate/{vid} {
+      allow create: if vid.matches('^[a-z0-9]{16}$') && request.resource.data.keys().hasOnly(['at']) && request.resource.data.at == request.time;
+      allow update: if request.resource.data.keys().hasOnly(['at']) && request.resource.data.at == request.time
+        && request.time > resource.data.at + duration.value(1, 's');
+      allow read, delete: if isOwner();
+    }
+    match /msgrate/{vid} {
+      allow create: if vid.matches('^[a-z0-9]{16}$') && request.resource.data.keys().hasOnly(['at']) && request.resource.data.at == request.time;
+      allow update: if request.resource.data.keys().hasOnly(['at']) && request.resource.data.at == request.time
+        && request.time > resource.data.at + duration.value(30, 's');
+      allow read, delete: if isOwner();
+    }
+
+    // ---------- Anonymous visit records: create-only, fixed shape ----------
+    match /events/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['type', 'page', 'target', 'vid', 'ref', 'returning', 'device', 'os', 'browser', 'lang', 'tz', 'at'])
+        && request.resource.data.type in ['view', 'open', 'download', 'source', 'film', 'preview', 'search', 'message']
+        && str(request.resource.data.page, 0, 80) && str(request.resource.data.target, 0, 60)
+        && vidOk(request.resource.data.vid) && str(request.resource.data.ref, 0, 80)
+        && request.resource.data.returning is bool
+        && str(request.resource.data.device, 0, 20) && str(request.resource.data.os, 0, 20) && str(request.resource.data.browser, 0, 20)
+        && str(request.resource.data.lang, 0, 12) && str(request.resource.data.tz, 0, 40)
+        && request.resource.data.at == request.time
+        && getAfter(/databases/$(database)/documents/rate/$(request.resource.data.vid)).data.at == request.time;
+      allow read, delete: if isOwner();
+    }
+
+    // ---------- Visitor messages: anyone may create a well-formed one ----------
+    match /messages/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['kind', 'name', 'email', 'text', 'topic', 'page', 'vid', 'read', 'createdAt'])
+        && request.resource.data.kind in ['contact', 'partner', 'careers', 'api']
+        && str(request.resource.data.name, 0, 80)
+        && str(request.resource.data.email, 3, 120) && request.resource.data.email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$')
+        && str(request.resource.data.text, 2, 4000)
+        && str(request.resource.data.topic, 0, 80) && str(request.resource.data.page, 0, 80)
+        && vidOk(request.resource.data.vid)
+        && request.resource.data.read == false
+        && request.resource.data.createdAt == request.time
+        && getAfter(/databases/$(database)/documents/msgrate/$(request.resource.data.vid)).data.at == request.time;
+      allow read: if isOwner();
+      allow update: if isFreshOwner() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow delete: if isFreshOwner();
+    }
+
+    // ---------- Owner only ----------
+    match /private/security {
+      allow read: if isOwner();
+      allow write: if isFreshOwner() && request.resource.data.keys().hasOnly(['revokedBefore', 'by'])
+        && request.resource.data.revokedBefore == request.time;
+    }
+    match /private/{doc} { allow read, write: if isFreshOwner() && doc != 'security'; }
+
+    // Everything else is closed.
+    match /{document=**} { allow read, write: if false; }
+  }
+}

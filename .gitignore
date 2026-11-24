@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+firestore-debug.log
+ui-debug.log
+.firebase

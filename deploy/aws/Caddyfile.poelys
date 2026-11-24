@@ -1,0 +1,39 @@
+# OPTIONAL hardening for the poelys.com block in /opt/lvn/Caddyfile on lvn-prod.
+# Not applied yet: that Caddy has `admin off`, so a config change needs a restart of the
+# lvn-caddy-1 container, a few seconds of downtime for LearnViaNotes and expensetracker too.
+# Apply it in a quiet moment: back up /opt/lvn/Caddyfile, replace the poelys.com block with this one,
+# `docker exec lvn-caddy-1 caddy validate --config /etc/caddy/Caddyfile`, then
+# `cd /opt/lvn && docker compose restart caddy`.
+# The site already works without it (it ships its own CSP); this adds CSP as a header plus frame-ancestors.
+
+poelys.com, www.poelys.com {
+	tls {
+		issuer acme
+	}
+	@www host www.poelys.com
+	redir @www https://poelys.com{uri} permanent
+
+	root * /srv/poelys
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		Cross-Origin-Opener-Policy same-origin-allow-popups
+		Content-Security-Policy "default-src 'self'; script-src 'self' https://apis.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://i.ytimg.com https://*.googleusercontent.com; connect-src 'self' https://firestore.googleapis.com https://*.googleapis.com; frame-src https:; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+		-Server
+	}
+
+	# Hashed build files never change: cache them for a year. Pages: 5 minutes.
+	@assets path /assets/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+	@pages not path /assets/*
+	header @pages Cache-Control "public, max-age=300"
+
+	# Every route is a real file (scripts/routes.mjs); anything else gets the app, which shows its own 404.
+	try_files {path} {path}/index.html /404.html
+	file_server
+}
