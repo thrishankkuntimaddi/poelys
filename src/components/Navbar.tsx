@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { useSite } from '../lib/config';
-import { Link, usePath } from '../lib/router';
+import { useSite } from '../lib/site';
+import { Link } from '../lib/router';
+import { usePath } from '../lib/route';
 import { Icon } from './Icon';
 import { ProductMark, StatusTag } from './bits';
 import { ScrollProgress } from './Fx';
@@ -31,7 +32,8 @@ export function Navbar({ onSearch }: { onSearch: () => void }) {
   const [scrolled, setScrolled] = useState(false);
   const hoverT = useRef<number | undefined>(undefined);
 
-  useEffect(() => { setOpen(null); setMobile(false); }, [path]);
+  const [shownPath, setShownPath] = useState(path);
+  if (shownPath !== path) { setShownPath(path); setOpen(null); setMobile(false); }
   useEffect(() => {
     const on = () => setScrolled(window.scrollY > 8);
     on();

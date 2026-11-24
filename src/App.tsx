@@ -4,8 +4,10 @@ import { CommandPalette } from './components/CommandPalette';
 import { Footer } from './components/Footer';
 import { Navbar } from './components/Navbar';
 import type { LegalKey } from './data/site';
-import { SiteProvider, useSite } from './lib/config';
-import { match, RouterProvider, usePath } from './lib/router';
+import { SiteProvider } from './lib/config';
+import { useSite } from './lib/site';
+import { RouterProvider } from './lib/router';
+import { match, usePath } from './lib/route';
 import { track } from './lib/track';
 import { Home } from './pages/Home';
 import { ProductPage } from './pages/ProductPage';
@@ -58,7 +60,7 @@ function Shell() {
   const [palette, setPalette] = useState(false);
 
   useEffect(() => {
-    if (path.startsWith('/studio')) return;
+    if (path.startsWith('/studio')) { document.title = 'Poelys Console'; return; }
     if (TITLES[path]) document.title = TITLES[path];
     track('view');
   }, [path]);
@@ -73,7 +75,6 @@ function Shell() {
   }, []);
 
   if (path.startsWith('/studio')) {
-    document.title = 'Poelys Console';
     return <Suspense fallback={<div className="console-loading">Poelys Console</div>}><Console /></Suspense>;
   }
   if (cfg.maintenance?.on) return <Maintenance message={cfg.maintenance.message} />;

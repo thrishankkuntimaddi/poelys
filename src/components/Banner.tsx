@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { safeUrl, useSite } from '../lib/config';
+import { safeUrl, useSite } from '../lib/site';
 import { Link } from '../lib/router';
 import { store } from '../lib/track';
 import { Icon } from './Icon';

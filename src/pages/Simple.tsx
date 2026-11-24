@@ -5,8 +5,9 @@ import { Notice, PageHead, ProductMark, SecHead, StatusTag } from '../components
 import { Tree } from '../components/Tree';
 import { STATUS_LABEL } from '../data/products';
 import { apiPlans, LEGAL, SITE, type LegalKey } from '../data/site';
-import { useSite } from '../lib/config';
-import { Link, usePath } from '../lib/router';
+import { useSite } from '../lib/site';
+import { Link } from '../lib/router';
+import { usePath } from '../lib/route';
 import { track } from '../lib/track';
 
 /** Wraps a page the Console can switch to "coming soon" or "under maintenance". */

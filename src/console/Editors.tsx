@@ -3,7 +3,7 @@ import { ProductMark, StatusTag } from '../components/bits';
 import { Icon } from '../components/Icon';
 import { branches as baseBranches, products as baseProducts, STATUS_LABEL, type Branch, type PreviewKind, type Product, type Status } from '../data/products';
 import { partners as basePartners, posts as basePosts, roles as baseRoles, socials as baseSocials, type Partner, type Post, type Role } from '../data/site';
-import { DEFAULT_HERO, mergeProducts, safeYouTube, type Banner, type SiteConfig } from '../lib/config';
+import { DEFAULT_HERO, mergeProducts, safeYouTube, type Banner, type SiteConfig } from '../lib/site';
 import type { Draft } from './Console';
 
 /* ---------- Field primitives ---------- */
@@ -220,12 +220,11 @@ export function ContentEditor({ d }: { d: Draft }) {
   const partners: Partner[] = d.cfg.partners ?? basePartners;
   const setK = <K extends keyof SiteConfig>(k: K) => (v: SiteConfig[K]) => d.set((c) => ({ ...c, [k]: v }));
   const resetK = (k: keyof SiteConfig) => () => d.set((c) => { delete c[k]; return c; });
-  const today = new Date().toISOString().slice(0, 10);
 
   return (
     <div className="cs-stack">
       <ListEditor title="Journal" items={posts} save={setK('posts')} reset={d.cfg.posts ? resetK('posts') : undefined}
-        blank={() => ({ slug: `note-${Date.now().toString(36)}`, title: 'Untitled note', date: today, tag: 'Studio', excerpt: '', body: [] })}
+        blank={() => ({ slug: `note-${Date.now().toString(36)}`, title: 'Untitled note', date: new Date().toISOString().slice(0, 10), tag: 'Studio', excerpt: '', body: [] })}
         render={(p, up) => <>
           <div className="cs-grid3">
             <F label="Title"><Txt v={p.title} on={(title) => up({ title })} /></F>

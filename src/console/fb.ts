@@ -8,7 +8,7 @@ import { firebaseConfig, OWNER_EMAIL } from '../lib/firebase-config';
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = initializeFirestore(app, { ignoreUndefinedProperties: true });
+const db = initializeFirestore(app, { ignoreUndefinedProperties: true });
 
 export { OWNER_EMAIL, onAuthStateChanged, type User };
 

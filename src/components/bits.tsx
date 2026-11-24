@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
+import { type CSSProperties, type ReactNode } from 'react';
 import { STATUS_LABEL, type Product, type Status } from '../data/products';
 import { Link } from '../lib/router';
 import { Arrow } from './Icon';
@@ -73,22 +73,6 @@ export function ProductCard({ p, branchName }: { p: Product; branchName?: string
       </div>
     </Link>
   );
-}
-
-/** Fade sections in once, as they scroll into view. */
-export function useReveal() {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const root = ref.current;
-    if (!root) return;
-    const els = root.querySelectorAll<HTMLElement>('.reveal');
-    const io = new IntersectionObserver((entries) => {
-      for (const e of entries) if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
-    }, { rootMargin: '0px 0px -8% 0px' });
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  });
-  return ref;
 }
 
 export function Notice({ kind, title, children }: { kind: 'soon' | 'maintenance'; title: string; children?: ReactNode }) {

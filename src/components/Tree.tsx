@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { horizon, STATUS_LABEL } from '../data/products';
-import { useSite } from '../lib/config';
-import { Link, navigate } from '../lib/router';
+import { useSite } from '../lib/site';
+import { Link } from '../lib/router';
+import { navigate } from '../lib/route';
 import { ProductMark, StatusTag } from './bits';
 
 /* Poelys as a tree: the studio is the trunk, each segment is a branch,

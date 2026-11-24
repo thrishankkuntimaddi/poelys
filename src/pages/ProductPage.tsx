@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Arrow, Icon } from '../components/Icon';
 import { MessageForm } from '../components/MessageForm';
 import { ProductCard, ProductMark, StatusTag } from '../components/bits';
-import { useSite } from '../lib/config';
+import { useSite } from '../lib/site';
 import { Link } from '../lib/router';
 import { track, type EventType } from '../lib/track';
 import { Preview } from '../previews/Preview';

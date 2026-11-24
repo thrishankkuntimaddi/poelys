@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { SITE } from '../data/site';
-import { useSite } from '../lib/config';
+import { useSite } from '../lib/site';
 import { Link } from '../lib/router';
 import { store } from '../lib/track';
 import { Icon } from './Icon';
 
 type Theme = 'system' | 'light' | 'dark';
+const YEAR = new Date().getFullYear();
 
-export function applyTheme(t: Theme) {
+function applyTheme(t: Theme) {
   const root = document.documentElement;
   if (t === 'system') root.removeAttribute('data-theme');
   else root.setAttribute('data-theme', t);
@@ -30,7 +31,6 @@ function ThemeSwitch() {
 
 export function Footer() {
   const { visible, branches, socials } = useSite();
-  const year = new Date().getFullYear();
 
   const cols: [string, [string, string][]][] = [
     ['Products', [
@@ -79,7 +79,7 @@ export function Footer() {
 
       <div className="foot__bar">
         <div className="wrap foot__bar-inner">
-          <span>© {year} Poelys. All rights reserved.</span>
+          <span>© {YEAR} Poelys. All rights reserved.</span>
           <span className="foot__dot" aria-hidden="true" />
           <a href="https://poelys.com" className="link">{SITE.domain}</a>
           <span className="foot__dot" aria-hidden="true" />

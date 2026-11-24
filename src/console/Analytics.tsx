@@ -32,13 +32,14 @@ function Ranked({ title, rows, empty = 'Nothing yet', fmt = (k: string) => k }: 
   );
 }
 
-function Daily({ events, days }: { events: Ev[]; days: number }) {
+function Daily({ events, days, now }: { events: Ev[]; days: number; now: number }) {
   const [hover, setHover] = useState<number | null>(null);
   const buckets = useMemo(() => {
     const hourly = days === 1;
     const n = hourly ? 24 : days;
     const size = hourly ? 3600_000 : 86400_000;
-    const start = hourly ? Date.now() - 24 * 3600_000 : new Date(new Date().toDateString()).getTime() - (days - 1) * 86400_000;
+    const midnight = new Date(now); midnight.setHours(0, 0, 0, 0);
+    const start = hourly ? now - 24 * 3600_000 : midnight.getTime() - (days - 1) * 86400_000;
     const b = Array.from({ length: n }, (_, i) => ({ t: new Date(start + i * size), views: 0 }));
     for (const e of events) {
       if (e.type !== 'view') continue;
@@ -46,7 +47,7 @@ function Daily({ events, days }: { events: Ev[]; days: number }) {
       if (i >= 0 && i < n) b[i].views++;
     }
     return { b, hourly };
-  }, [events, days]);
+  }, [events, days, now]);
   const max = Math.max(1, ...buckets.b.map((x) => x.views));
   const W = 720, H = 180, gap = 2, bw = (W - gap * (buckets.b.length - 1)) / buckets.b.length;
   const label = (t: Date) => buckets.hourly ? t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : t.toLocaleDateString([], { day: 'numeric', month: 'short' });
@@ -83,13 +84,19 @@ function Daily({ events, days }: { events: Ev[]; days: number }) {
 
 export function Analytics() {
   const [days, setDays] = useState(7);
-  const [events, setEvents] = useState<Ev[] | null>(null);
-  const [err, setErr] = useState('');
+  const [data, setData] = useState<{ days: number; events: Ev[]; at: number } | null>(null);
+  const [err, setErr] = useState<{ days: number; msg: string } | null>(null);
 
   useEffect(() => {
-    setEvents(null); setErr('');
-    loadEvents(days).then(setEvents).catch((e) => setErr(String(e.message || e)));
+    let alive = true;
+    loadEvents(days)
+      .then((events) => { if (alive) setData({ days, events, at: Date.now() }); })
+      .catch((e) => { if (alive) setErr({ days, msg: String(e.message || e) }); });
+    return () => { alive = false; };
   }, [days]);
+  const events = data && data.days === days ? data.events : null;
+  const loadedAt = data?.at ?? 0;
+  const errMsg = err && err.days === days ? err.msg : '';
 
   const s = useMemo(() => {
     const ev = events || [];
@@ -119,16 +126,16 @@ export function Analytics() {
         <div className="cs-seg" role="radiogroup" aria-label="Range">
           {RANGES.map(([d, l]) => <button key={d} role="radio" aria-checked={days === d} className={days === d ? 'is-on' : ''} onClick={() => setDays(d)}>{l}</button>)}
         </div>
-        <span className="cs-meta">{events ? `${events.length.toLocaleString()} events` : err ? '' : 'Loading…'} · visitors with Do Not Track are never counted</span>
+        <span className="cs-meta">{events ? `${events.length.toLocaleString()} events` : errMsg ? '' : 'Loading…'} · visitors with Do Not Track are never counted</span>
       </div>
-      {err && <div className="cs-alert">{err}</div>}
+      {errMsg && <div className="cs-alert">{errMsg}</div>}
 
       <div className="cs-kpis">
         {kpis.map(([k, v, sub]) => <div key={k} className="cs-kpi"><span>{k}</span><b>{events ? v.toLocaleString() : '—'}</b>{sub && <i>{sub}</i>}</div>)}
       </div>
 
       {events && <>
-        <Daily events={events} days={days} />
+        <Daily events={events} days={days} now={loadedAt} />
         <div className="cs-grid2">
           <Ranked title="Top pages" rows={s.pages} />
           <Ranked title="Product pages viewed" rows={s.productViews} fmt={pname} />

@@ -75,7 +75,7 @@ export const posts: Post[] = [
 export interface Partner { name: string; kind: string; note: string; url?: string }
 export const partners: Partner[] = [];
 
-export interface ApiPlan { name: string; price: string; note: string; points: string[] }
+interface ApiPlan { name: string; price: string; note: string; points: string[] }
 export const apiPlans: ApiPlan[] = [
   { name: 'Explore', price: 'Free', note: 'For trying things', points: ['Rate limited per key', 'Community support', 'All public endpoints'] },
   { name: 'Build', price: 'Usage based', note: 'For products in production', points: ['Higher limits', 'Usage dashboard', 'Email support'] },

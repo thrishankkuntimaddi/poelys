@@ -5,7 +5,7 @@ import { defineConfig, type Plugin } from 'vite'
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
 
 // Content Security Policy, added to production builds only (the dev server injects inline scripts).
-// GitHub Pages cannot send headers, so it ships as a meta tag. Scripts: this site and Google's Firebase only.
+// The same policy is also sent as a header by Caddy (deploy/aws/Caddyfile.poelys). Scripts: this site and Google's Firebase only.
 const CSP = [
   "default-src 'self'",
   "script-src 'self' https://apis.google.com https://www.gstatic.com",

@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Icon } from '../components/Icon';
 import { PageHead, ProductCard, ProductRow } from '../components/bits';
 import { STATUS_LABEL, type Status } from '../data/products';
-import { useSite } from '../lib/config';
-import { useQuery } from '../lib/router';
+import { useSite } from '../lib/site';
+import { useQuery } from '../lib/route';
 import { store } from '../lib/track';
 
 export function Products() {
@@ -15,7 +15,8 @@ export function Products() {
   const [q, setQ] = useState('');
   const [view, setView] = useState<'grid' | 'list'>(() => (store.get('poelys.view') === 'list' ? 'list' : 'grid'));
 
-  useEffect(() => { setBranch(qBranch); }, [qBranch]);
+  const [seenQ, setSeenQ] = useState(qBranch);
+  if (seenQ !== qBranch) { setSeenQ(qBranch); setBranch(qBranch); }
   useEffect(() => {
     const url = branch === 'all' ? '/products' : `/products?branch=${branch}`;
     if (location.pathname + location.search !== url) history.replaceState(null, '', url);

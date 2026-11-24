@@ -1,5 +1,5 @@
-// GitHub Pages has no rewrites. Copy index.html to every known route so deep
-// links answer 200, and to 404.html so routes added later from the Console
+// Copy index.html to every known route so deep links answer 200 straight from
+// Caddy's file server, and to 404.html so routes added later from the Console
 // (new products, posts) still load the app.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';

@@ -2,7 +2,8 @@ import { useState, type ReactNode } from 'react';
 import { Icon } from '../components/Icon';
 import type { Product } from '../data/products';
 import { track } from '../lib/track';
-import { Scene, frameFor } from './Scenes';
+import { frameFor } from './frame';
+import { Scene } from './Scenes';
 
 type Tab = 'inside' | 'run' | 'watch';
 

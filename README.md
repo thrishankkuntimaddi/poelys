@@ -2,7 +2,7 @@
 
 The website of Poelys, a product studio: **poelys.com**. Software today, hardware tomorrow, one trunk with many branches.
 
-React 19 + TypeScript + Vite. **poelys.com is served from AWS Lightsail** (`lvn-prod`, Mumbai); deploy with `deploy/aws/deploy.sh`. The GitHub Pages workflow still builds on every push to `main`, but the domain's DNS points at AWS, so that copy is not what visitors see. A private **Console** at `/studio` controls the live site and shows its analytics, backed by Firebase project `poelys-67d9b`.
+React 19 + TypeScript + Vite. **poelys.com is served from AWS Lightsail** (`lvn-prod`, Mumbai); deploy with `deploy/aws/deploy.sh`. A private **Console** at `/studio` controls the live site and shows its analytics, backed by Firebase project `poelys-67d9b`.
 
 ## What's on the site
 
@@ -70,7 +70,7 @@ aws login                        # the AWS account that owns lvn-prod
 ./deploy/aws/deploy.sh rollback  # put the last backup back
 ```
 
-SSH uses a short-lived certificate from Lightsail, so no key files are needed. The script never reloads Caddy, so LearnViaNotes is never interrupted. `deploy/aws/Caddyfile.poelys` is optional extra hardening that needs a Caddy restart (see the notes in the file).
+SSH uses a short-lived certificate from Lightsail, so no key files are needed. The script never reloads Caddy, so LearnViaNotes is never interrupted. `deploy/aws/Caddyfile.poelys` is the poelys.com block of the server's Caddyfile; keep the two in sync.
 
 Content changes (banner, statuses, films, posts) never need a deploy: they come from the Console.
 
@@ -83,6 +83,6 @@ npm run build     # typecheck, build, then write a page per route + sitemap.xml 
 npm run preview
 ```
 
-GitHub Pages has no rewrites, so `scripts/routes.mjs` copies `index.html` to every known route and to `404.html`.
+`scripts/routes.mjs` copies `index.html` to every known route (so Caddy answers deep links with a 200) and to `404.html`.
 
 The version in the footer comes from `package.json`. Raise it when you ship.

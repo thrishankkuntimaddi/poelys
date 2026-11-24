@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Arrow } from '../components/Icon';
-import { ProductMark, SecHead, StatusTag, useReveal } from '../components/bits';
+import { ProductMark, SecHead, StatusTag } from '../components/bits';
+import { useReveal } from '../lib/useReveal';
 import { Tree } from '../components/Tree';
-import { Hud, useSpotlight } from '../components/Fx';
+import { Hud } from '../components/Fx';
+import { useSpotlight } from '../lib/useSpotlight';
 import { STATUS_LABEL } from '../data/products';
-import { useSite } from '../lib/config';
+import { useSite } from '../lib/site';
 import { Link } from '../lib/router';
 import { Preview } from '../previews/Preview';
 import { Scene } from '../previews/Scenes';

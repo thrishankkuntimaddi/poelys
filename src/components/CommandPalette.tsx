@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { STATUS_LABEL } from '../data/products';
-import { useSite } from '../lib/config';
-import { navigate } from '../lib/router';
+import { useSite } from '../lib/site';
+import { navigate } from '../lib/route';
 import { track } from '../lib/track';
 import { Icon } from './Icon';
 import { ProductMark } from './bits';
@@ -58,10 +58,9 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       .slice(0, 12);
   }, [q, items]);
 
-  useEffect(() => { setSel(0); }, [q]);
-  useEffect(() => {
-    if (open) { setQ(''); requestAnimationFrame(() => input.current?.focus()); }
-  }, [open]);
+  const [wasOpen, setWasOpen] = useState(open);
+  if (wasOpen !== open) { setWasOpen(open); if (open) { setQ(''); setSel(0); } }
+  useEffect(() => { if (open) requestAnimationFrame(() => input.current?.focus()); }, [open]);
 
   if (!open) return null;
 
@@ -73,7 +72,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
         <div className="palette__field">
           <Icon name="search" size={18} />
           <input
-            ref={input} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search products, pages and the journal"
+            ref={input} value={q} onChange={(e) => { setQ(e.target.value); setSel(0); }} placeholder="Search products, pages and the journal"
             aria-label="Search" aria-controls="palette-list" aria-activedescendant={results[sel] ? `pi-${sel}` : undefined}
             onKeyDown={(e) => {
               if (e.key === 'ArrowDown') { e.preventDefault(); setSel((s) => Math.min(s + 1, results.length - 1)); }

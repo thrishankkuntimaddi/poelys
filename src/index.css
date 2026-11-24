@@ -122,9 +122,7 @@ em.accent, .accent { color: var(--red-text); font-style: italic; }
 .section--alt { background: var(--paper-2); }
 .section--ink { background: #121110; color: #f1ede6; --ink: #f1ede6; --ink-2: rgba(241,237,230,.72); --ink-3: rgba(241,237,230,.5); --line: rgba(241,237,230,.12); --line-2: rgba(241,237,230,.24); --paper-2: #1b1917; --paper-3: #24211e; --red-text: #ff5a52; }
 .rule { border: 0; border-top: 1px solid var(--line); }
-.stack-s > * + * { margin-top: 12px; }
 .stack > * + * { margin-top: 20px; }
-.stack-l > * + * { margin-top: 36px; }
 
 .sec-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: end; margin-bottom: clamp(36px, 5vw, 64px); }
 .sec-head .t-label { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }

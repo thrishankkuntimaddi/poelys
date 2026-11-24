@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Icon } from '../components/Icon';
-import type { SiteConfig } from '../lib/config';
+import type { SiteConfig } from '../lib/site';
 import { Link } from '../lib/router';
 import { Analytics } from './Analytics';
 import { BranchesEditor, ContentEditor, ProductsEditor, SiteEditor, SocialsEditor } from './Editors';
@@ -46,8 +46,8 @@ export default function Console() {
   const [note, setNote] = useState('');
   const [nav, setNav] = useState(false);
 
-  useEffect(() => onAuthStateChanged(auth, (u) => { setUser(u); setReady(true); }), []);
-  useEffect(() => { history.replaceState(null, '', `/studio#${tab}`); setNav(false); }, [tab]);
+  useEffect(() => { history.replaceState(null, '', `/studio#${tab}`); }, [tab]);
+  const openTab = (t: Tab) => { setTab(t); setNav(false); };
 
   const reload = useCallback(async () => {
     setState('loading');
@@ -57,7 +57,10 @@ export default function Console() {
       setSaved(data); setCfg(JSON.parse(data)); setMeta({ updatedAt: c?.updatedAt, by: c?.by }); setState('idle');
     } catch (e) { setErr(String((e as Error).message || e)); setState('error'); }
   }, []);
-  useEffect(() => { if (isOwner(user)) void reload(); }, [user, reload]);
+  useEffect(() => onAuthStateChanged(auth, (u) => {
+    setUser(u); setReady(true);
+    if (isOwner(u)) void reload();
+  }), [reload]);
 
   const json = useMemo(() => JSON.stringify(cfg), [cfg]);
   const dirty = json !== saved;
@@ -88,7 +91,7 @@ export default function Console() {
         <div className="cs-brand"><img src="/poelys-wordmark.png" alt="Poelys" width={84} height={33} /><span>Console</span></div>
         <nav>
           {TABS.map(([id, label, icon]) => (
-            <button key={id} className={tab === id ? 'is-on' : ''} onClick={() => setTab(id)}><Icon name={icon} size={16} />{label}</button>
+            <button key={id} className={tab === id ? 'is-on' : ''} onClick={() => openTab(id)}><Icon name={icon} size={16} />{label}</button>
           ))}
         </nav>
         <div className="cs-who">
