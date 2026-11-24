@@ -1,10 +1,9 @@
-# OPTIONAL hardening for the poelys.com block in /opt/lvn/Caddyfile on lvn-prod.
-# Not applied yet: that Caddy has `admin off`, so a config change needs a restart of the
-# lvn-caddy-1 container, a few seconds of downtime for LearnViaNotes and expensetracker too.
-# Apply it in a quiet moment: back up /opt/lvn/Caddyfile, replace the poelys.com block with this one,
-# `docker exec lvn-caddy-1 caddy validate --config /etc/caddy/Caddyfile`, then
-# `cd /opt/lvn && docker compose restart caddy`.
-# The site already works without it (it ships its own CSP); this adds CSP as a header plus frame-ancestors.
+# The poelys.com block of /opt/lvn/Caddyfile on the Lightsail server lvn-prod (applied 24 Nov 2026).
+# This file is the source of truth: change it here, then on the server back up /opt/lvn/Caddyfile,
+# replace the poelys.com block with this one, check it with
+#   docker exec lvn-caddy-1 caddy validate --config <file> --adapter caddyfile
+# and restart with `docker restart lvn-caddy-1` (admin is off, so no graceful reload). The restart
+# also blips LearnViaNotes and expensetracker.poelys.com for about a second.
 
 poelys.com, www.poelys.com {
 	tls {
@@ -17,7 +16,7 @@ poelys.com, www.poelys.com {
 	encode zstd gzip
 
 	header {
-		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options nosniff
 		X-Frame-Options DENY
 		Referrer-Policy strict-origin-when-cross-origin

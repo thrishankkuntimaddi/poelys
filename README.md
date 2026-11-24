@@ -70,7 +70,7 @@ aws login                        # the AWS account that owns lvn-prod
 ./deploy/aws/deploy.sh rollback  # put the last backup back
 ```
 
-SSH uses a short-lived certificate from Lightsail, so no key files are needed. The script never reloads Caddy, so LearnViaNotes is never interrupted. `deploy/aws/Caddyfile.poelys` is the poelys.com block of the server's Caddyfile; keep the two in sync.
+SSH uses a short-lived certificate from Lightsail, so no key files are needed. The script never reloads Caddy, so LearnViaNotes is never interrupted. `deploy/aws/Caddyfile.poelys` is the poelys.com block of the server's Caddyfile (security headers, caching, routing); the file explains how to change it.
 
 Content changes (banner, statuses, films, posts) never need a deploy: they come from the Console.
 
