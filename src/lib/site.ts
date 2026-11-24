@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { branches as baseBranches, products as baseProducts, type Branch, type Product, type Status } from '../data/products';
+import { branches as baseBranches, products as baseProducts, STATUS_RANK, type Branch, type Product, type Status } from '../data/products';
 import { partners as basePartners, posts as basePosts, roles as baseRoles, socials as baseSocials, type Partner, type Post, type Role, type Social, type SocialId } from '../data/site';
 
 /* Live site configuration, written from the Poelys Console to site/config.
@@ -29,7 +29,13 @@ export const DEFAULT_HERO: Hero = {
   sub: 'Poelys is a product studio. Software today, hardware tomorrow, and whatever grows after that.',
 };
 
-const STATUSES: Status[] = ['live', 'beta', 'soon', 'maintenance', 'concept', 'hidden'];
+const STATUSES = Object.keys(STATUS_RANK) as Status[];
+
+/** Uploaded icons, keyed by product id, published to site/assets as data URLs. */
+export type Assets = Record<string, string>;
+export const ASSET_PREFIX = 'asset:';
+export const safeImage = (u: unknown) => (typeof u === 'string' && /^data:image\/(png|webp|jpeg);base64,[A-Za-z0-9+/=]+$/.test(u) && u.length < 200_000 ? u : '');
+
 export const safeUrl = (u: unknown) => (typeof u === 'string' && /^(https:\/\/|mailto:|\/)/.test(u.trim()) ? u.trim() : '');
 export const safeYouTube = (v: unknown) => {
   if (typeof v !== 'string') return '';
@@ -49,7 +55,15 @@ function cleanProduct(p: Partial<Product>): Partial<Product> {
   if (typeof p.openSource === 'boolean') out.openSource = p.openSource;
   if (p.youtube !== undefined) out.youtube = safeYouTube(p.youtube);
   if (p.embed !== undefined) out.embed = safeUrl(p.embed);
-  if (p.icon !== undefined) out.icon = safeUrl(p.icon);
+  if (p.icon !== undefined) out.icon = typeof p.icon === 'string' && p.icon.startsWith(ASSET_PREFIX) ? p.icon.slice(0, 80) : safeUrl(p.icon);
+  if (typeof p.archived === 'boolean') out.archived = p.archived;
+  if (typeof p.removed === 'boolean') out.removed = p.removed;
+  if (Array.isArray(p.extraLinks)) {
+    out.extraLinks = p.extraLinks
+      .filter((l) => l && typeof l.label === 'string' && safeUrl(l.url))
+      .map((l) => ({ label: l.label.slice(0, 60), url: safeUrl(l.url) }))
+      .slice(0, 12);
+  }
   if (p.preview) out.preview = p.preview;
   if (Array.isArray(p.platforms)) out.platforms = p.platforms.filter((x) => typeof x === 'string').slice(0, 12);
   if (Array.isArray(p.highlights)) out.highlights = p.highlights.filter((x) => typeof x === 'string').slice(0, 8);
@@ -71,9 +85,26 @@ export function mergeProducts(cfg: SiteConfig): Product[] {
       description: c.description || '', accent: c.accent || '#d01a1a', platforms: c.platforms || [], highlights: c.highlights || [],
       links: c.links || {}, preview: c.preview || 'workspace', year: c.year || new Date().getFullYear(), order: c.order ?? 99,
       icon: c.icon, embed: c.embed, youtube: c.youtube, featured: c.featured, openSource: c.openSource,
+      extraLinks: c.extraLinks, archived: c.archived, removed: c.removed,
     });
   }
-  return list.sort((a, b) => a.order - b.order);
+  return sortProducts(list);
+}
+
+/** Live first, then beta, in development, coming soon…; within a status, by the order set in the Console. */
+export function sortProducts(list: Product[]) {
+  return list.sort((a, b) => (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9) || a.order - b.order || a.name.localeCompare(b.name));
+}
+
+export const isOnSite = (p: Product) => !p.archived && !p.removed && p.status !== 'hidden';
+
+/** Swap asset:<id> icons for the uploaded image (or fall back to the built-in icon). */
+export function resolveIcons(list: Product[], assets: Assets): Product[] {
+  return list.map((p) => {
+    if (!p.icon?.startsWith(ASSET_PREFIX)) return p;
+    const img = safeImage(assets[p.icon.slice(ASSET_PREFIX.length)]);
+    return { ...p, icon: img || baseProducts.find((b) => b.id === p.id)?.icon };
+  });
 }
 
 export interface Site {
@@ -97,12 +128,12 @@ export function parseConfig(raw: string | null): SiteConfig {
   try { const j = JSON.parse(raw); return j && typeof j === 'object' ? j : {}; } catch { return {}; }
 }
 
-export function buildSite(cfg: SiteConfig, loaded: boolean): Site {
-  const products = mergeProducts(cfg);
+export function buildSite(cfg: SiteConfig, loaded: boolean, assets: Assets = {}): Site {
+  const products = resolveIcons(mergeProducts(cfg), assets);
   const socials = baseSocials.map((s) => ({ ...s, url: cfg.socials?.[s.id] !== undefined ? safeUrl(cfg.socials[s.id]) : s.url }));
   return {
     cfg, loaded, products,
-    visible: products.filter((p) => p.status !== 'hidden'),
+    visible: products.filter(isOnSite),
     branches: Array.isArray(cfg.branches) && cfg.branches.length ? cfg.branches : baseBranches,
     socials,
     posts: (Array.isArray(cfg.posts) ? cfg.posts : basePosts).slice().sort((a, b) => b.date.localeCompare(a.date)),

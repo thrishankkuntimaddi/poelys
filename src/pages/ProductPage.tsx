@@ -108,7 +108,14 @@ export function ProductPage({ id }: { id: string }) {
                   </a>
                 </li>
               ))}
-              {!Object.values(p.links).some(Boolean) && <li className="res__none t-small">Links appear here when {p.name} opens to the public.</li>}
+              {(p.extraLinks || []).map((l) => (
+                <li key={l.url}>
+                  <a href={l.url} target="_blank" rel="noopener noreferrer" onClick={() => track('open', p.id)}>
+                    <Icon name="ext" size={16} /><span>{l.label || 'Link'}</span><span className="t-mono res__host">{new URL(l.url).host}</span><Arrow />
+                  </a>
+                </li>
+              ))}
+              {!Object.values(p.links).some(Boolean) && !p.extraLinks?.length && <li className="res__none t-small">Links appear here when {p.name} opens to the public.</li>}
             </ul>
             {unavailable && (
               <div className="notify">

@@ -24,6 +24,7 @@
   --ok: #157f3b;
   --warn: #a15c07;
   --info: #1d4ed8;
+  --dev: #7c3aed;
 
   --font-display: 'DM Serif Display', 'Times New Roman', serif;
   --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -55,6 +56,7 @@
     --ok: #3ecf75;
     --warn: #f0a640;
     --info: #7aa2ff;
+    --dev: #b48cff;
     color-scheme: dark;
   }
 }
@@ -75,6 +77,7 @@
   --ok: #3ecf75;
   --warn: #f0a640;
   --info: #7aa2ff;
+  --dev: #b48cff;
   color-scheme: dark;
 }
 
@@ -117,7 +120,7 @@ em.accent, .accent { color: var(--red-text); font-style: italic; }
 
 /* ---------- Layout ---------- */
 .wrap { width: 100%; max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
-.section { padding: clamp(72px, 10vw, 140px) 0; position: relative; }
+.section { padding: clamp(56px, 7vw, 104px) 0; position: relative; }
 .section--tight { padding: clamp(48px, 6vw, 88px) 0; }
 .section--alt { background: var(--paper-2); }
 .section--ink { background: #121110; color: #f1ede6; --ink: #f1ede6; --ink-2: rgba(241,237,230,.72); --ink-3: rgba(241,237,230,.5); --line: rgba(241,237,230,.12); --line-2: rgba(241,237,230,.24); --paper-2: #1b1917; --paper-3: #24211e; --red-text: #ff5a52; }
@@ -225,3 +228,4 @@ em.accent, .accent { color: var(--red-text); font-style: italic; }
 .hud-strip__end { margin-left: auto; border-right: 0 !important; color: var(--red-text); }
 .hud-strip__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); animation: pulse 2.4s infinite; }
 @media (max-width: 720px) { .hud-strip > span:nth-child(n+4) { display: none; } .hud-strip > span { padding: 10px 12px; } }
+.status--dev i { background: var(--dev); }

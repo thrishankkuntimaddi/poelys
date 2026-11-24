@@ -41,7 +41,7 @@
 .cs-card h3 { font-size: 14px; font-weight: 600; }
 .cs-card__head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 
-.cs-field { display: grid; gap: 6px; min-width: 0; }
+.cs-field { display: grid; gap: 6px; min-width: 0; align-content: start; }
 .cs-field > span { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); }
 .cs-field > em { font-style: normal; font-size: 12px; color: var(--ink-3); }
 .cs-input { width: 100%; padding: 8px 10px; border: 1px solid var(--line-2); border-radius: 2px; background: var(--paper); color: var(--ink); font-size: 14px; }
@@ -144,3 +144,31 @@ textarea.cs-input { resize: vertical; line-height: 1.5; }
   .cs-versions li { grid-template-columns: 1fr auto; }
   .cs-note { width: 100%; }
 }
+
+/* ---------- Products: grouped list with drag and drop ---------- */
+.cs-list__hint { font-size: 12px; color: var(--ink-3); padding: 4px 6px 8px; line-height: 1.45; }
+.cs-group + .cs-group { margin-top: 10px; }
+.cs-group__head { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); padding: 8px 6px 6px; border-top: 1px solid var(--line); }
+.cs-list__item { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 4px; padding: 0; border-radius: 2px; }
+.cs-list__item:not([draggable="true"]) { grid-template-columns: 1fr; }
+.cs-list__item.is-drag { opacity: .45; }
+.cs-list__item[draggable="true"] { cursor: grab; }
+.cs-list__pick { display: grid; grid-template-columns: 28px 1fr; gap: 2px 10px; align-items: center; padding: 8px 6px; text-align: left; min-width: 0; }
+.cs-list__pick .status { grid-column: 2; font-size: 10px; }
+.cs-list__name { font-weight: 500; display: flex; align-items: center; gap: 6px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cs-grip { color: var(--ink-3); font-size: 11px; letter-spacing: -2px; padding-left: 4px; user-select: none; }
+.cs-list__move { display: flex; flex-direction: column; opacity: 0; transition: opacity .15s; }
+.cs-list__item:hover .cs-list__move, .cs-list__move:focus-within { opacity: 1; }
+.cs-list__move button { font-size: 11px; padding: 1px 6px; color: var(--ink-3); }
+.cs-list__move button:hover { color: var(--red-text); }
+
+/* ---------- Product header ---------- */
+.cs-ph__top { display: grid; grid-template-columns: 120px 1fr; gap: 20px; align-items: start; }
+.cs-ph__icon { display: grid; justify-items: start; gap: 8px; }
+.cs-ph__name { font-family: var(--font-display); font-size: 30px; padding: 6px 10px; }
+.cs-ph__actions { margin-top: 6px; }
+.cs-upload { cursor: pointer; position: relative; }
+.cs-upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.cs-note-bar { padding: 10px 14px; background-color: var(--paper-2); border-left: 3px solid var(--ink-3); font-size: 13px; }
+.cs-extra { display: grid; grid-template-columns: 1fr 2fr auto; gap: 8px; align-items: center; }
+@media (max-width: 900px) { .cs-ph__top { grid-template-columns: 1fr; } .cs-extra { grid-template-columns: 1fr; } .cs-list__move { opacity: 1; } }

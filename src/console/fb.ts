@@ -36,6 +36,15 @@ export async function publishConfig(json: string, note: string) {
   await addDoc(collection(db, 'versions'), { data: json, at: serverTimestamp(), by, note: note.slice(0, 120) });
 }
 
+/** Uploaded icons: site/assets holds { data: JSON map of product id -> image data URL }. */
+export async function loadAssets(): Promise<string> {
+  const s = await getDoc(doc(db, 'site', 'assets'));
+  return s.exists() ? (s.data().data as string) : '{}';
+}
+export async function publishAssets(json: string) {
+  await setDoc(doc(db, 'site', 'assets'), { data: json, updatedAt: serverTimestamp(), by: auth.currentUser?.email || '' });
+}
+
 export async function listVersions() {
   const s = await getDocs(query(collection(db, 'versions'), orderBy('at', 'desc'), limit(30)));
   return s.docs.map((d) => ({ id: d.id, data: d.data().data as string, at: d.data().at?.toDate?.() as Date | undefined, note: d.data().note as string, by: d.data().by as string }));

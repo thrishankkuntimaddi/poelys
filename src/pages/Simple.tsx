@@ -34,8 +34,8 @@ export function Ecosystem() {
       <section className="section"><div className="wrap">
         <SecHead label="Legend" title="How to read it." />
         <div className="legend">
-          {(['live', 'beta', 'soon', 'maintenance', 'concept'] as const).map((s) => (
-            <div key={s}><StatusTag status={s} /><p className="t-small">{{ live: 'Open to everyone, today.', beta: 'Usable now, and still changing.', soon: 'Built and running, not public yet.', maintenance: 'Being fixed. It will be back.', concept: 'An idea we are serious about.' }[s]}</p></div>
+          {(['live', 'beta', 'dev', 'soon', 'maintenance', 'concept'] as const).map((s) => (
+            <div key={s}><StatusTag status={s} /><p className="t-small">{{ live: 'Open to everyone, today.', beta: 'Usable now, and still changing.', dev: 'Being built right now.', soon: 'Built and running, not public yet.', maintenance: 'Being fixed. It will be back.', concept: 'An idea we are serious about.' }[s]}</p></div>
           ))}
           <div><span className="status"><i style={{ border: '1.5px dashed var(--ink-3)', background: 'transparent' }} />Bud</span><p className="t-small">What grows next on a branch.</p></div>
         </div>
@@ -272,7 +272,7 @@ export function Pricing() {
           {visible.map((p) => (
             <div key={p.id} className="price-row" role="row">
               <span role="cell" className="price-row__name"><ProductMark p={p} size={28} />{p.name}</span>
-              <span role="cell" className="t-mono">{p.links.pricing ? 'Free + paid plans' : p.status === 'soon' || p.status === 'concept' ? 'Not yet priced' : 'Free'}</span>
+              <span role="cell" className="t-mono">{p.links.pricing ? 'Free + paid plans' : ['soon', 'dev', 'concept'].includes(p.status) ? 'Not yet priced' : 'Free'}</span>
               <span role="cell"><StatusTag status={p.status} /></span>
               <span role="cell">{p.links.pricing ? <a className="link-arrow" href={p.links.pricing} target="_blank" rel="noopener noreferrer">Plans <Arrow /></a> : <Link to={`/products/${p.id}`} className="link-arrow">Details <Arrow /></Link>}</span>
             </div>
@@ -319,7 +319,7 @@ export function Contact() {
           <div>
             <p className="t-label">Elsewhere</p>
             <ul className="contact-socials">
-              {socials.map((s) => <li key={s.id}>{s.url ? <a href={s.url} target="_blank" rel="noopener noreferrer" className="link"><Icon name={s.id} size={16} />{s.name}</a> : <span className="is-soon"><Icon name={s.id} size={16} />{s.name}<em>soon</em></span>}</li>)}
+              {socials.filter((s) => s.url).map((s) => <li key={s.id}><a href={s.url} target="_blank" rel="noopener noreferrer" className="link"><Icon name={s.id} size={16} />{s.name}</a></li>)}
             </ul>
           </div>
         </div>

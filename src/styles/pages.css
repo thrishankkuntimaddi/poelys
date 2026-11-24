@@ -38,6 +38,7 @@
 .board__st--live { color: var(--ok); }
 .board__st--beta { color: var(--info); }
 .board__st--soon { color: var(--red-text); }
+.board__st--dev { color: var(--dev); }
 .board__st--maintenance { color: var(--warn); }
 @media (max-width: 480px) { .board__row { grid-template-columns: 24px 1fr 96px; } .board__branch { display: none; } }
 
@@ -90,6 +91,7 @@
 .tree__leaf--live .tree__dot { fill: var(--ok); }
 .tree__leaf--beta .tree__dot { fill: var(--info); }
 .tree__leaf--soon .tree__dot { fill: var(--red); }
+.tree__leaf--dev .tree__dot { fill: var(--dev); }
 .tree__leaf--maintenance .tree__dot { fill: var(--warn); }
 .tree__bud circle { fill: none; stroke: var(--ink-3); stroke-width: 1.4; stroke-dasharray: 3 3; }
 .tree__root-label text { font-family: var(--font-mono); font-size: 13px; letter-spacing: .5em; fill: var(--red-text); font-weight: 600; }
@@ -355,3 +357,25 @@
   .hero__meta { gap: 6px 16px; }
   .board__rows { max-height: 330px; }
 }
+
+/* Branch cards list their products (aligned grid) */
+.branch { display: flex; flex-direction: column; gap: 10px; }
+.branch__n { text-transform: uppercase; letter-spacing: .06em; }
+.branch__blurb { min-height: 3.2em; }
+.branch__list { display: grid; gap: 2px; margin: 8px 0 0; flex: 1; align-content: start; border-top: 1px solid var(--line); padding-top: 10px; }
+.branch__prod { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: center; padding: 6px 4px; border-radius: 2px; transition: background-color .15s; }
+.branch__prod:hover { background-color: var(--paper-2); }
+.branch__prod:hover .branch__prod-name { color: var(--red-text); }
+.branch__prod-name { font-weight: 500; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.branch__prod .status { font-size: 10px; }
+.branch__empty { color: var(--ink-3); padding: 6px 4px; }
+.branch__count:hover { color: var(--red-text); }
+.branch:hover { background-color: transparent; }
+.section--alt .branch__prod:hover { background-color: var(--paper-3); }
+
+/* Hardware: in development */
+.hw__label { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.hw__tag { font-size: 10px; letter-spacing: .08em; padding: 3px 8px; border: 1px dashed var(--red-line); color: var(--red-text); border-radius: 2px; }
+
+/* Hero: less air above the headline */
+.hero__inner { padding-top: clamp(28px, 4vw, 56px); }

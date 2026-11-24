@@ -134,16 +134,22 @@ export function Home() {
             {branches.map((b, i) => {
               const list = visible.filter((p) => p.branch === b.id);
               return (
-                <Link key={b.id} to={`/products?branch=${b.id}`} className="branch hud">
-                  <span className="t-mono branch__n">B/{String(i + 1).padStart(2, '0')}</span>
+                <div key={b.id} className="branch hud">
+                  <span className="t-mono branch__n">B/{String(i + 1).padStart(2, '0')} · {b.kind}</span>
                   <h3 className="t-h3">{b.name}</h3>
-                  <p className="t-small">{b.blurb}</p>
-                  <div className="branch__marks">
-                    {list.map((p) => <ProductMark key={p.id} p={p} size={30} />)}
-                    {!list.length && <span className="t-mono">Growing</span>}
-                  </div>
-                  <span className="branch__count t-mono">{list.length} {list.length === 1 ? 'product' : 'products'} <Arrow /></span>
-                </Link>
+                  <p className="t-small branch__blurb">{b.blurb}</p>
+                  <ul className="branch__list">
+                    {list.map((p) => (
+                      <li key={p.id}>
+                        <Link to={`/products/${p.id}`} className="branch__prod">
+                          <ProductMark p={p} size={28} /><span className="branch__prod-name">{p.name}</span><StatusTag status={p.status} />
+                        </Link>
+                      </li>
+                    ))}
+                    {!list.length && <li className="t-mono branch__empty">Growing</li>}
+                  </ul>
+                  <Link to={`/products?branch=${b.id}`} className="branch__count t-mono">{list.length} {list.length === 1 ? 'product' : 'products'} <Arrow /></Link>
+                </div>
               );
             })}
           </div>
@@ -154,7 +160,7 @@ export function Home() {
       <section className="section section--alt">
         <div className="wrap reveal hw">
           <div className="hw__copy">
-            <p className="t-label t-label--red">Hardware & DIY</p>
+            <p className="t-label t-label--red hw__label">Hardware & DIY <span className="hw__tag">In development</span></p>
             <h2 className="t-h2">Next: things you can hold.</h2>
             <p className="t-body">Software is where Poelys started. Rovers that drive themselves and a desk clock with a voice are where it is heading. Every Mark is open-sourced once it is done: code, wiring, docs and build films.</p>
             <div className="btn-row">

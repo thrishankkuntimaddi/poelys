@@ -61,20 +61,18 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="foot__follow">
-          <p className="t-label">Follow Poelys</p>
-          <ul className="foot__socials">
-            {socials.map((s) => (
-              <li key={s.id}>
-                {s.url ? (
+        {socials.some((s) => s.url) && (
+          <div className="foot__follow">
+            <p className="t-label">Follow Poelys</p>
+            <ul className="foot__socials">
+              {socials.filter((s) => s.url).map((s) => (
+                <li key={s.id}>
                   <a href={s.url} target="_blank" rel="noopener noreferrer me" aria-label={s.name} title={s.name}><Icon name={s.id} size={18} /></a>
-                ) : (
-                  <span className="is-soon" aria-label={`${s.name}, coming soon`} title={`${s.name}, coming soon`}><Icon name={s.id} size={18} /></span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
       <div className="foot__bar">

@@ -9,16 +9,23 @@
    `youtube` line, e.g.  youtube: 'dQw4w9WgXcQ',
    ========================================================= */
 
-export type Status = 'live' | 'beta' | 'soon' | 'maintenance' | 'concept' | 'hidden';
+export type Status = 'live' | 'beta' | 'dev' | 'soon' | 'maintenance' | 'concept' | 'hidden';
 
 export const STATUS_LABEL: Record<Status, string> = {
   live: 'Live',
   beta: 'Beta',
+  dev: 'In development',
   soon: 'Coming soon',
   maintenance: 'Under maintenance',
   concept: 'Concept',
   hidden: 'Hidden',
 };
+
+/** Products are listed by status first (live on top), then by their own order. */
+export const STATUS_RANK: Record<Status, number> = { live: 0, beta: 1, dev: 2, soon: 3, maintenance: 4, concept: 5, hidden: 9 };
+
+/** Statuses offered in the Console (hidden is replaced by Archive). */
+export const STATUS_CHOICES: Status[] = ['live', 'beta', 'dev', 'soon', 'maintenance', 'concept'];
 
 /** Which hand-coded scene renders inside the product's preview frame. */
 export type PreviewKind =
@@ -43,6 +50,8 @@ export interface ProductLinks {
   terms?: string;
 }
 
+export interface ExtraLink { label: string; url: string }
+
 export interface Product {
   id: string;
   name: string;
@@ -66,6 +75,12 @@ export interface Product {
   featured?: boolean;
   year: number;
   order: number;
+  /** Any other links (docs, store pages, press). */
+  extraLinks?: ExtraLink[];
+  /** Archived: off the website, kept in the Console. */
+  archived?: boolean;
+  /** Deleted: off the website and in the Console's bin, restorable. */
+  removed?: boolean;
 }
 
 export const branches: Branch[] = [
@@ -236,7 +251,7 @@ export const products: Product[] = [
     preview: 'space', youtube: '',
   },
   {
-    id: 'ms-minutes', name: 'Ms. Minutes', branch: 'hardware', status: 'soon', order: 13, featured: true, year: 2026,
+    id: 'ms-minutes', name: 'Ms. Minutes', branch: 'hardware', status: 'dev', order: 13, featured: true, year: 2026,
     tagline: 'One brain. Many bodies.',
     summary: 'A persistent AI companion that lives in a tiny retro clock on your desk.',
     description:
@@ -248,7 +263,7 @@ export const products: Product[] = [
     preview: 'clock', openSource: true, youtube: '',
   },
   {
-    id: 'rc-rovers', name: 'RC Crawlers', branch: 'hardware', status: 'beta', order: 14, year: 2026,
+    id: 'rc-rovers', name: 'RC Crawlers', branch: 'hardware', status: 'dev', order: 14, year: 2026,
     tagline: 'From tablet-driven crawlers to autonomous explorers.',
     summary: 'A numbered series of home-built rovers, each Mark adding a new capability.',
     description:

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Icon } from '../components/Icon';
-import type { SiteConfig } from '../lib/site';
+import type { Assets, SiteConfig } from '../lib/site';
 import { Link } from '../lib/router';
 import { Analytics } from './Analytics';
 import { BranchesEditor, ContentEditor, ProductsEditor, SiteEditor, SocialsEditor } from './Editors';
-import { auth, isOwner, loadConfig, logOut, onAuthStateChanged, OWNER_EMAIL, publishConfig, signIn, type User } from './fb';
+import { auth, isOwner, loadAssets, loadConfig, logOut, onAuthStateChanged, OWNER_EMAIL, publishAssets, publishConfig, signIn, type User } from './fb';
 import { Inbox, Security } from './Inbox';
 import './console.css';
 
@@ -15,7 +15,13 @@ const TABS: [Tab, string, string][] = [
   ['inbox', 'Inbox', 'mail'], ['security', 'Security & versions', 'lock'],
 ];
 
-export interface Draft { cfg: SiteConfig; set: (fn: (c: SiteConfig) => SiteConfig) => void }
+export interface Draft {
+  cfg: SiteConfig;
+  set: (fn: (c: SiteConfig) => SiteConfig) => void;
+  /** Uploaded icons (draft), published to site/assets with the rest. */
+  assets: Assets;
+  setAsset: (id: string, dataUrl: string | null) => void;
+}
 
 function SignIn({ user, error }: { user: User | null; error: string }) {
   const [busy, setBusy] = useState(false);
@@ -40,6 +46,8 @@ export default function Console() {
   const [tab, setTab] = useState<Tab>(() => (location.hash.slice(1) as Tab) || 'overview');
   const [saved, setSaved] = useState<string>('{}');
   const [cfg, setCfg] = useState<SiteConfig>({});
+  const [savedAssets, setSavedAssets] = useState<string>('{}');
+  const [assets, setAssets] = useState<Assets>({});
   const [meta, setMeta] = useState<{ updatedAt?: Date; by?: string }>({});
   const [state, setState] = useState<'idle' | 'loading' | 'publishing' | 'error'>('loading');
   const [err, setErr] = useState('');
@@ -52,7 +60,8 @@ export default function Console() {
   const reload = useCallback(async () => {
     setState('loading');
     try {
-      const c = await loadConfig();
+      const [c, a] = await Promise.all([loadConfig(), loadAssets()]);
+      setSavedAssets(a); setAssets(JSON.parse(a));
       const data = c?.data || '{}';
       setSaved(data); setCfg(JSON.parse(data)); setMeta({ updatedAt: c?.updatedAt, by: c?.by }); setState('idle');
     } catch (e) { setErr(String((e as Error).message || e)); setState('error'); }
@@ -63,7 +72,9 @@ export default function Console() {
   }), [reload]);
 
   const json = useMemo(() => JSON.stringify(cfg), [cfg]);
-  const dirty = json !== saved;
+  const assetsJson = useMemo(() => JSON.stringify(assets), [assets]);
+  const assetsDirty = assetsJson !== savedAssets;
+  const dirty = json !== saved || assetsDirty;
   useEffect(() => {
     const on = (e: BeforeUnloadEvent) => { if (dirty) e.preventDefault(); };
     window.addEventListener('beforeunload', on);
@@ -73,12 +84,17 @@ export default function Console() {
   if (!ready) return <div className="console-loading">Poelys Console</div>;
   if (!isOwner(user)) return <SignIn user={user} error={err} />;
 
-  const draft: Draft = { cfg, set: (fn) => setCfg((c) => fn(structuredClone(c))) };
+  const draft: Draft = {
+    cfg, set: (fn) => setCfg((c) => fn(structuredClone(c))),
+    assets, setAsset: (id, url) => setAssets((a) => { const n = { ...a }; if (url) n[id] = url; else delete n[id]; return n; }),
+  };
 
   async function publish() {
     setState('publishing'); setErr('');
     try {
-      await publishConfig(json, note || 'Update');
+      // Icons first, so the config never points at an icon that isn't there yet.
+      if (assetsDirty) { await publishAssets(assetsJson); setSavedAssets(assetsJson); }
+      if (json !== saved) await publishConfig(json, note || 'Update');
       setSaved(json); setNote(''); setMeta({ updatedAt: new Date(), by: user?.email || '' }); setState('idle');
     } catch (e) {
       setErr(String((e as Error).message || e)); setState('error');
@@ -109,7 +125,7 @@ export default function Console() {
             {meta.updatedAt && <span className="cs-meta">Published {meta.updatedAt.toLocaleString()}</span>}
             {dirty && <>
               <input className="cs-input cs-note" placeholder="What changed? (optional)" value={note} onChange={(e) => setNote(e.target.value)} maxLength={120} />
-              <button className="cs-btn" onClick={() => setCfg(JSON.parse(saved))}>Discard</button>
+              <button className="cs-btn" onClick={() => { setCfg(JSON.parse(saved)); setAssets(JSON.parse(savedAssets)); }}>Discard</button>
             </>}
             <button className="cs-btn cs-btn--solid" disabled={!dirty || state === 'publishing'} onClick={publish}>
               {state === 'publishing' ? 'Publishing…' : dirty ? 'Publish changes' : 'All published'}

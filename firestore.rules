@@ -26,11 +26,12 @@ service cloud.firestore {
     function vidOk(v) { return v is string && v.matches('^[a-z0-9]{16}$'); }
 
     // ---------- Published site config: anyone reads, owner writes ----------
+    // config: the site settings. assets: uploaded product icons (data URLs), up to ~900 KB in all.
     match /site/{doc} {
       allow read: if true;
-      allow write: if isFreshOwner() && doc == 'config'
+      allow write: if isFreshOwner() && doc in ['config', 'assets']
         && request.resource.data.keys().hasOnly(['data', 'updatedAt', 'by'])
-        && str(request.resource.data.data, 2, 400000)
+        && str(request.resource.data.data, 2, doc == 'assets' ? 900000 : 400000)
         && request.resource.data.updatedAt == request.time;
     }
     match /versions/{id} {

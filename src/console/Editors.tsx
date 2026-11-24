@@ -1,9 +1,9 @@
 import { useState, type ReactNode } from 'react';
 import { ProductMark, StatusTag } from '../components/bits';
 import { Icon } from '../components/Icon';
-import { branches as baseBranches, products as baseProducts, STATUS_LABEL, type Branch, type PreviewKind, type Product, type Status } from '../data/products';
+import { branches as baseBranches, products as baseProducts, STATUS_CHOICES, STATUS_LABEL, type Branch, type PreviewKind, type Product } from '../data/products';
 import { partners as basePartners, posts as basePosts, roles as baseRoles, socials as baseSocials, type Partner, type Post, type Role } from '../data/site';
-import { DEFAULT_HERO, mergeProducts, safeYouTube, type Banner, type SiteConfig } from '../lib/site';
+import { ASSET_PREFIX, DEFAULT_HERO, isOnSite, mergeProducts, resolveIcons, safeYouTube, type Banner, type SiteConfig } from '../lib/site';
 import type { Draft } from './Console';
 
 /* ---------- Field primitives ---------- */
@@ -75,60 +75,222 @@ export function SiteEditor({ d }: { d: Draft }) {
 }
 
 /* ---------- Products ---------- */
-const STATUSES = Object.keys(STATUS_LABEL) as Status[];
 const PREVIEWS: PreviewKind[] = ['workspace', 'chat', 'restaurant', 'ledger', 'notes', 'orbit', 'breath', 'grid', 'jobs', 'phone-text', 'tablet', 'clock', 'rover', 'space'];
-const LINK_KEYS = ['open', 'site', 'download', 'source', 'pricing', 'privacy', 'terms'] as const;
+const LINK_KEYS: [keyof Product['links'], string][] = [['open', 'Open the app'], ['site', 'Product website'], ['download', 'Download'], ['source', 'Source code'], ['pricing', 'Pricing'], ['privacy', 'Privacy policy'], ['terms', 'Terms']];
+
+/** Resize an uploaded image to a 256 px square WebP (or PNG) data URL, cropped to the centre. */
+async function toIcon(file: File): Promise<string> {
+  if (!file.type.startsWith('image/')) throw new Error('That file is not an image.');
+  // An <img> decodes PNG, JPEG, WebP and SVG alike (createImageBitmap can't do SVG).
+  const src = URL.createObjectURL(file);
+  const bmp = await new Promise<HTMLImageElement>((ok, fail) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => fail(new Error('That image could not be read.')); i.src = src; });
+  URL.revokeObjectURL(src);
+  const w = bmp.naturalWidth || 256, h = bmp.naturalHeight || 256;
+  const size = 256, s = Math.min(w, h);
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const ctx = c.getContext('2d')!;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(bmp, (w - s) / 2, (h - s) / 2, s, s, 0, 0, size, size);
+  for (const q of [0.9, 0.8, 0.65]) {
+    const url = c.toDataURL('image/webp', q);
+    if (url.startsWith('data:image/webp') && url.length < 120_000) return url;
+  }
+  const png = c.toDataURL('image/png');
+  if (png.length < 190_000) return png;
+  throw new Error('That image is too detailed to use as an icon. Try a simpler one.');
+}
+
+const thisYear = () => new Date().getFullYear();
+const slug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
 
 export function ProductsEditor({ d }: { d: Draft }) {
-  const list = mergeProducts(d.cfg);
+  const all = resolveIcons(mergeProducts(d.cfg), d.assets);
   const branches = d.cfg.branches?.length ? d.cfg.branches : baseBranches;
-  const [sel, setSel] = useState<string>(list[0]?.id);
-  const p = list.find((x) => x.id === sel);
+  const onSite = all.filter(isOnSite);
+  const archived = all.filter((p) => p.archived && !p.removed);
+  const bin = all.filter((p) => p.removed);
+  const [sel, setSel] = useState<string>(onSite[0]?.id ?? all[0]?.id);
+  const [drag, setDrag] = useState<string | null>(null);
+  const [iconErr, setIconErr] = useState('');
+  const p = all.find((x) => x.id === sel);
   const isBase = baseProducts.some((x) => x.id === sel);
-  const over = d.cfg.products?.[sel] || {};
+  const edited = !!d.cfg.products?.[sel];
 
-  const set = <K extends keyof Product>(k: K, v: Product[K]) =>
-    d.set((c) => ({ ...c, products: { ...c.products, [sel]: { ...c.products?.[sel], [k]: v } } }));
-  const setLink = (k: string, v: string) => set('links', { ...p!.links, [k]: v });
+  const patch = (id: string, v: Partial<Product>) =>
+    d.set((c) => ({ ...c, products: { ...c.products, [id]: { ...c.products?.[id], ...v } } }));
+  const set = <K extends keyof Product>(k: K, v: Product[K]) => patch(sel, { [k]: v } as Partial<Product>);
+
+  /** Write a new order for every product on the site (status grouping stays automatic). */
+  function reorder(ids: string[]) {
+    d.set((c) => {
+      const products = { ...c.products };
+      ids.forEach((id, i) => { products[id] = { ...products[id], order: (i + 1) * 10 }; });
+      return { ...c, products };
+    });
+  }
+  function move(id: string, to: string | number) {
+    const ids = onSite.map((x) => x.id);
+    const from = ids.indexOf(id);
+    const target = typeof to === 'number' ? from + to : ids.indexOf(to);
+    if (from < 0 || target < 0 || target >= ids.length || from === target) return;
+    const [x] = ids.splice(from, 1); ids.splice(target, 0, x);
+    reorder(ids);
+  }
 
   function add() {
-    const name = prompt('Product name');
-    if (!name) return;
-    const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
-    if (!id || list.some((x) => x.id === id)) { alert('That name is taken.'); return; }
-    d.set((c) => ({ ...c, products: { ...c.products, [id]: { name, branch: branches[0].id, status: 'concept', order: list.length + 1, tagline: '', summary: '', description: '', platforms: [], highlights: [], links: {}, preview: 'workspace', accent: '#d01a1a', year: new Date().getFullYear() } } }));
+    const name = prompt('Name of the new product');
+    if (!name?.trim()) return;
+    let id = slug(name) || 'product';
+    while (all.some((x) => x.id === id)) id += '-2';
+    patch(id, { name: name.trim(), branch: branches[0].id, status: 'concept', order: (onSite.length + 1) * 10, tagline: '', summary: '', description: '', platforms: [], highlights: [], links: {}, preview: 'workspace', accent: '#d01a1a', year: thisYear() });
     setSel(id);
   }
+  function duplicate() {
+    if (!p) return;
+    let id = `${p.id}-copy`;
+    while (all.some((x) => x.id === id)) id += '-2';
+    const { id: _ignored, ...rest } = p;
+    void _ignored;
+    patch(id, { ...rest, name: `${p.name} (copy)`, icon: p.icon?.startsWith('data:') ? undefined : p.icon, archived: true, removed: false });
+    if (d.assets[p.id]) { d.setAsset(id, d.assets[p.id]); patch(id, { icon: `${ASSET_PREFIX}${id}` }); }
+    setSel(id);
+  }
+  function deleteForever() {
+    if (!p || isBase) return;
+    if (!confirm(`Delete ${p.name} for good? This can't be undone after you publish.`)) return;
+    d.set((c) => { const products = { ...c.products }; delete products[p.id]; return { ...c, products }; });
+    d.setAsset(p.id, null);
+    setSel(onSite[0]?.id);
+  }
+  async function upload(file: File | undefined) {
+    setIconErr('');
+    if (!file || !p) return;
+    try {
+      const url = await toIcon(file);
+      d.setAsset(p.id, url);
+      set('icon', `${ASSET_PREFIX}${p.id}`);
+    } catch (e) { setIconErr((e as Error).message); }
+  }
+  function resetIcon() {
+    if (!p) return;
+    d.setAsset(p.id, null);
+    const base = baseProducts.find((x) => x.id === p.id);
+    d.set((c) => {
+      const o = { ...c.products?.[p.id] };
+      delete o.icon;
+      const products = { ...c.products, [p.id]: base ? o : { ...o, icon: undefined } };
+      if (base && !Object.keys(o).length) delete products[p.id];
+      return { ...c, products };
+    });
+  }
+
+  // A render function, not a component: the row must keep the same DOM node while it is being dragged.
+  const item = (x: Product, draggable: boolean) => (
+    <div
+      key={x.id}
+      className={`cs-list__item ${x.id === sel ? 'is-on' : ''} ${drag === x.id ? 'is-drag' : ''}`}
+      draggable={draggable}
+      onDragStart={(e) => { setDrag(x.id); e.dataTransfer.effectAllowed = 'move'; }}
+      onDragEnd={() => setDrag(null)}
+      onDragOver={(e) => { if (drag && draggable) e.preventDefault(); }}
+      onDrop={(e) => { e.preventDefault(); if (drag) move(drag, x.id); setDrag(null); }}
+    >
+      {draggable && <span className="cs-grip" aria-hidden="true">⋮⋮</span>}
+      <button className="cs-list__pick" onClick={() => setSel(x.id)}>
+        <ProductMark p={x} size={28} />
+        <span className="cs-list__name">{x.name}{d.cfg.products?.[x.id] && <i className="cs-dot" title="Changed" />}</span>
+        <StatusTag status={x.status} />
+      </button>
+      {draggable && (
+        <span className="cs-list__move">
+          <button aria-label={`Move ${x.name} up`} onClick={() => move(x.id, -1)}>↑</button>
+          <button aria-label={`Move ${x.name} down`} onClick={() => move(x.id, 1)}>↓</button>
+        </span>
+      )}
+    </div>
+  );
+
+  const groups = STATUS_CHOICES.map((s) => [s, onSite.filter((x) => x.status === s)] as const).filter(([, l]) => l.length);
 
   return (
     <div className="cs-split">
       <div className="cs-list">
         <button className="cs-btn cs-btn--block" onClick={add}><Icon name="plus" size={14} /> Add product</button>
-        {list.map((x) => (
-          <button key={x.id} className={`cs-list__item ${x.id === sel ? 'is-on' : ''}`} onClick={() => setSel(x.id)}>
-            <ProductMark p={x} size={28} /><span>{x.name}{d.cfg.products?.[x.id] && <i className="cs-dot" title="Edited" />}</span><StatusTag status={x.status} />
-          </button>
+        <p className="cs-list__hint">On the website, in this order. Live always comes first; drag (or ↑ ↓) to set the order within a status.</p>
+        {groups.map(([s, l]) => (
+          <div key={s} className="cs-group">
+            <p className="cs-group__head">{STATUS_LABEL[s]} · {l.length}</p>
+            {l.map((x) => item(x, true))}
+          </div>
         ))}
+        {archived.length > 0 && (
+          <div className="cs-group">
+            <p className="cs-group__head">Archived · off the website · {archived.length}</p>
+            {archived.map((x) => item(x, false))}
+          </div>
+        )}
+        {bin.length > 0 && (
+          <div className="cs-group">
+            <p className="cs-group__head">Deleted · {bin.length}</p>
+            {bin.map((x) => item(x, false))}
+          </div>
+        )}
       </div>
+
       {p && (
         <div className="cs-stack">
-          <Card title={p.name} aside={
-            <div className="cs-row">
-              <a className="cs-linkbtn" href={`/products/${p.id}`} target="_blank" rel="noopener">View ↗</a>
-              {Object.keys(over).length > 0 && <button className="cs-linkbtn" onClick={() => d.set((c) => { if (c.products) delete c.products[sel]; return c; })}>{isBase ? 'Reset to default' : <><Icon name="trash" size={14} /> Delete</>}</button>}
-            </div>}>
+          <section className="cs-card cs-ph">
+            {p.removed && <div className="cs-alert">Deleted. It is off the website{isBase ? '' : ' and will be gone for good if you delete it forever'}. Restore it to bring it back.</div>}
+            {p.archived && !p.removed && <div className="cs-note-bar">Archived: off the website, kept here. Show it again any time.</div>}
+            <div className="cs-ph__top">
+              <div className="cs-ph__icon">
+                <ProductMark p={p} size={84} />
+                <label className="cs-linkbtn cs-upload">
+                  <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={(e) => { void upload(e.target.files?.[0]); e.target.value = ''; }} />
+                  <Icon name="plus" size={13} /> Upload icon
+                </label>
+                {(d.assets[p.id] || d.cfg.products?.[p.id]?.icon !== undefined) && <button className="cs-linkbtn" onClick={resetIcon}>Use default icon</button>}
+              </div>
+              <div className="cs-ph__main">
+                <label className="cs-field"><span>Name</span>
+                  <input className="cs-input cs-ph__name" value={p.name} maxLength={60} onChange={(e) => set('name', e.target.value)} />
+                </label>
+                <p className="cs-meta">Address: poelys.com/products/{p.id}{isBase ? '' : ' (set when the product was created)'}</p>
+                <div className="cs-row cs-ph__actions">
+                  <a className="cs-btn" href={`/products/${p.id}`} target="_blank" rel="noopener">View ↗</a>
+                  <button className="cs-btn" onClick={duplicate}>Duplicate</button>
+                  {!p.removed && (p.archived
+                    ? <button className="cs-btn cs-btn--solid" onClick={() => set('archived', false)}>Show on website</button>
+                    : <button className="cs-btn" onClick={() => set('archived', true)}>Archive</button>)}
+                  {p.removed
+                    ? <>
+                        <button className="cs-btn cs-btn--solid" onClick={() => set('removed', false)}>Restore</button>
+                        {!isBase && <button className="cs-btn cs-btn--danger" onClick={deleteForever}><Icon name="trash" size={14} /> Delete forever</button>}
+                      </>
+                    : <button className="cs-btn cs-btn--danger" onClick={() => set('removed', true)}><Icon name="trash" size={14} /> Delete</button>}
+                  {isBase && edited && <button className="cs-linkbtn" onClick={() => confirm(`Undo every change to ${p.name}?`) && (d.set((c) => { const products = { ...c.products }; delete products[p.id]; return { ...c, products }; }), d.setAsset(p.id, null))}>Reset to default</button>}
+                </div>
+              </div>
+            </div>
+            {iconErr && <p className="cs-err">{iconErr}</p>}
+            <p className="cs-meta">Icons are cropped to a square and resized to 256 px. Changes go live when you press Publish.</p>
+          </section>
+
+          <Card title="Status & placement">
             <div className="cs-grid3">
-              <F label="Status"><Sel v={p.status} on={(v) => set('status', v)} opts={STATUSES.map((s) => [s, STATUS_LABEL[s]])} /></F>
+              <F label="Status" hint="Sets its group: live first"><Sel v={p.status === 'hidden' ? 'concept' : p.status} on={(v) => set('status', v)} opts={STATUS_CHOICES.map((s) => [s, STATUS_LABEL[s]])} /></F>
               <F label="Branch"><Sel v={p.branch} on={(v) => set('branch', v)} opts={branches.map((b) => [b.id, b.name])} /></F>
-              <F label="Order"><input className="cs-input" type="number" value={p.order} onChange={(e) => set('order', Number(e.target.value))} /></F>
+              <F label="Since (year)"><input className="cs-input" type="number" value={p.year} onChange={(e) => set('year', Number(e.target.value))} /></F>
             </div>
             <div className="cs-row"><Toggle v={p.featured} on={(v) => set('featured', v)} label="Featured on home" /><Toggle v={p.openSource} on={(v) => set('openSource', v)} label="Open source" /></div>
-            <div className="cs-grid2">
-              <F label="Name"><Txt v={p.name} on={(v) => set('name', v)} /></F>
-              <F label="Tagline"><Txt v={p.tagline} on={(v) => set('tagline', v)} /></F>
-            </div>
-            <F label="Summary" hint="One line, used on cards"><Txt v={p.summary} on={(v) => set('summary', v)} /></F>
+          </Card>
+
+          <Card title="Words">
+            <F label="Tagline"><Txt v={p.tagline} on={(v) => set('tagline', v)} /></F>
+            <F label="Summary" hint="One line, used on cards and in search"><Txt v={p.summary} on={(v) => set('summary', v)} /></F>
             <F label="Description"><Area v={p.description} on={(v) => set('description', v)} rows={5} max={2000} /></F>
+            <F label="Highlights" hint="One per line, up to 8"><Area v={p.highlights.join('\n')} on={(v) => set('highlights', v.split('\n').map((s) => s.trim()).filter(Boolean))} rows={4} /></F>
+            <F label="Platforms" hint="Comma separated"><Txt v={p.platforms.join(', ')} on={(v) => set('platforms', v.split(',').map((s) => s.trim()).filter(Boolean))} /></F>
           </Card>
 
           <Card title="Film & preview">
@@ -140,23 +302,23 @@ export function ProductsEditor({ d }: { d: Draft }) {
             </div>
             {p.youtube && safeYouTube(p.youtube) && <img className="cs-yt" src={`https://i.ytimg.com/vi/${safeYouTube(p.youtube)}/mqdefault.jpg`} alt="Film thumbnail" />}
             {p.youtube && !safeYouTube(p.youtube) && <p className="cs-err">That doesn't look like a YouTube link.</p>}
-            <F label="'Try it here' URL" hint="Only sites that allow framing work (no X-Frame-Options: DENY). Empty = hide the tab.">
+            <F label="'Try it here' URL" hint="Only sites that allow framing work. Empty = hide the tab.">
               <Txt v={p.embed} on={(v) => set('embed', v)} ph="https://…" />
             </F>
+            <F label="Colour" hint="Used inside the coded scene"><input className="cs-input cs-color" type="color" value={p.accent} onChange={(e) => set('accent', e.target.value)} /></F>
           </Card>
 
           <Card title="Links">
-            <div className="cs-grid2">{LINK_KEYS.map((k) => <F key={k} label={k}><Txt v={p.links[k]} on={(v) => setLink(k, v)} ph="https://…" /></F>)}</div>
-          </Card>
-
-          <Card title="Details">
-            <div className="cs-grid2">
-              <F label="Platforms" hint="Comma separated"><Txt v={p.platforms.join(', ')} on={(v) => set('platforms', v.split(',').map((s) => s.trim()).filter(Boolean))} /></F>
-              <F label="Icon" hint="/images/… or https://…"><Txt v={p.icon} on={(v) => set('icon', v)} /></F>
-              <F label="Colour"><input className="cs-input cs-color" type="color" value={p.accent} onChange={(e) => set('accent', e.target.value)} /></F>
-              <F label="Year"><input className="cs-input" type="number" value={p.year} onChange={(e) => set('year', Number(e.target.value))} /></F>
-            </div>
-            <F label="Highlights" hint="One per line"><Area v={p.highlights.join('\n')} on={(v) => set('highlights', v.split('\n').map((s) => s.trim()).filter(Boolean))} rows={4} /></F>
+            <div className="cs-grid2">{LINK_KEYS.map(([k, label]) => <F key={k} label={label}><Txt v={p.links[k]} on={(v) => set('links', { ...p.links, [k]: v })} ph="https://…" /></F>)}</div>
+            <p className="cs-field"><span>More links</span></p>
+            {(p.extraLinks || []).map((l, i) => (
+              <div key={i} className="cs-extra">
+                <Txt v={l.label} on={(label) => set('extraLinks', (p.extraLinks || []).map((x, k) => (k === i ? { ...x, label } : x)))} ph="Label, e.g. Docs" max={60} />
+                <Txt v={l.url} on={(url) => set('extraLinks', (p.extraLinks || []).map((x, k) => (k === i ? { ...x, url } : x)))} ph="https://…" />
+                <button className="cs-linkbtn" aria-label="Remove link" onClick={() => set('extraLinks', (p.extraLinks || []).filter((_, k) => k !== i))}><Icon name="trash" size={14} /></button>
+              </div>
+            ))}
+            <button className="cs-btn" onClick={() => set('extraLinks', [...(p.extraLinks || []), { label: '', url: '' }])}><Icon name="plus" size={14} /> Add a link</button>
           </Card>
         </div>
       )}
@@ -264,7 +426,7 @@ export function ContentEditor({ d }: { d: Draft }) {
 /* ---------- Socials ---------- */
 export function SocialsEditor({ d }: { d: Draft }) {
   return (
-    <Card title="Follow Poelys" aside={<span className="cs-meta">Empty = shown greyed out as "coming soon"</span>}>
+    <Card title="Follow Poelys" aside={<span className="cs-meta">Only accounts with a link appear on the website</span>}>
       <div className="cs-grid2">
         {baseSocials.map((s) => (
           <F key={s.id} label={s.name}>
